@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Stacked Bar Chart Template</title>
-<!-- TEMPLATE_VERSION 10 (2026-07-04) -->
+<!-- TEMPLATE_VERSION 13 (2026-07-04) -->
 <style>
   :root {
     --card-bg: #ffffff;          /* Menu/background */
@@ -129,7 +129,7 @@
   .bar-track {
     flex: 1 1 auto;
     min-width: 0;
-    height: var(--bar-height, 26px);
+    height: var(--bar-height, 18px);
     display: flex;
     border-radius: var(--bar-radius, 8px);
     overflow: hidden;               /* clips segments to the rounded ends */
@@ -314,7 +314,7 @@
 <script>
 (function () {
   "use strict";
-  console.log("DRFA bar chart TEMPLATE_VERSION 10");
+  console.log("DRFA bar chart TEMPLATE_VERSION 13");
 
   var loadingHidden = false;
   function hideLoading() {
@@ -347,10 +347,12 @@
     showRowValue: true,     // progress mode: value at the right end of each row
     showTrack: true,        // progress mode: grey track behind the fill
     legendPosition: "right",// "right" | "top"
+    showLegend: true,       // false = hide legend entirely
+    valueAlign: null,       // "bar" (hug bar end) | "right" (aligned column); default: bar for stacked, right for progress
     rowLabelAlign: "left",  // "left" | "right"
     maxValue: null,         // progress mode: fixed scale max; null = largest row total
     colorRules: null,       // e.g. [{min:90,color:"#17B751"},{min:50,color:"#F7630C"},{min:0,color:"#EF4444"}]
-    barHeight: 26,          // px
+    barHeight: 18,          // px (override per chart via payload, e.g. barHeight: 10 for thin progress bars)
     barRadius: 8,           // px — Figma radius token l (xs 2 / s 4 / m 6 / l 8 / xl 12)
 
     // Known series get fixed design-system colours; extras rotate the accent palette.
@@ -400,6 +402,8 @@
     showRowValue: CONFIG.showRowValue,
     showTrack: CONFIG.showTrack,
     legendPosition: CONFIG.legendPosition,
+    showLegend: CONFIG.showLegend,
+    valueAlign: CONFIG.valueAlign,
     rowLabelAlign: CONFIG.rowLabelAlign,
     maxValue: CONFIG.maxValue,
     colorRules: CONFIG.colorRules,
@@ -546,6 +550,7 @@
     legendEl.innerHTML = "";
     document.getElementById("chartArea").classList.toggle("legend-top",
       state.legendPosition === "top");
+    legendEl.style.display = state.showLegend === false ? "none" : "";
     rowsEl.classList.toggle("label-right", state.rowLabelAlign === "right");
 
     var chartArea = document.getElementById("chartArea");
@@ -675,10 +680,13 @@
         rv.className = "row-value";
         rv.textContent = state.rowDisplay[rowName] != null
           ? state.rowDisplay[rowName] : fmtCompact(total);
-        if (mode === "progress") {
-          rowDiv.appendChild(rv);        // aligned column at row end
-        } else {
+        var hugBar = state.valueAlign != null
+          ? state.valueAlign === "bar"
+          : mode !== "progress";
+        if (hugBar) {
           track.appendChild(rv);         // hugs the bar end, Power BI style
+        } else {
+          rowDiv.appendChild(rv);        // aligned column at row end
         }
       }
 
@@ -734,6 +742,10 @@
       if (payload.showTrack !== undefined)
         state.showTrack = (payload.showTrack === true || payload.showTrack === "true");
       if (payload.legendPosition) state.legendPosition = String(payload.legendPosition);
+      if (payload.showLegend !== undefined)
+        state.showLegend = !(payload.showLegend === false || payload.showLegend === "false");
+      if (payload.valueAlign !== undefined)
+        state.valueAlign = payload.valueAlign ? String(payload.valueAlign) : null;
       if (payload.rowLabelAlign)  state.rowLabelAlign = String(payload.rowLabelAlign);
       if (payload.colorRules !== undefined) state.colorRules = resolveColorRules(payload.colorRules);
       if (payload.barHeight)   state.barHeight = +payload.barHeight || state.barHeight;
