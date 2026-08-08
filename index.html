@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Stacked Bar Chart Template</title>
-<!-- TEMPLATE_VERSION 14 (2026-07-08) -->
+<!-- TEMPLATE_VERSION 15 (2026-08-08) -->
 <style>
   :root {
     --card-bg: #ffffff;          /* Menu/background */
@@ -12,7 +12,7 @@
     --title-color: #111827;      /* grey 900 */
     --value-color: #111827;      /* grey 900 */
     --label-color: #686c75;      /* Menu/text muted */
-    --track-bg: #e5e7eb;         /* grey 200 progress track */
+    --track-bg: #f2f4f7;         /* light grey progress track */
     --row-line: #f3f4f6;         /* grey 100 row separators */
     --font: "Segoe UI", -apple-system, "Helvetica Neue", Arial, sans-serif;
     /* Figma radius tokens: xs 2 / s 4 / m 6 / l 8 / xl 12 */
@@ -84,6 +84,23 @@
     max-height: none;
     overflow: visible;
     padding-right: 0;
+  }
+
+  /* legendPosition: "bottom" — horizontal legend below the bars, divider above */
+  .chart-area.legend-bottom {
+    flex-direction: column;
+    gap: 14px;
+  }
+  .chart-area.legend-bottom .legend {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: 8px 20px;
+    max-height: none;
+    overflow: visible;
+    padding-right: 0;
+    padding-top: 14px;
+    border-top: 1px solid var(--row-line);
   }
 
   /* rowLabelAlign: "right" */
@@ -314,7 +331,7 @@
 <script>
 (function () {
   "use strict";
-  console.log("DRFA bar chart TEMPLATE_VERSION 14");
+  console.log("DRFA bar chart TEMPLATE_VERSION 15");
 
   var loadingHidden = false;
   function hideLoading() {
@@ -332,7 +349,7 @@
      via the payload (URL hash / query / postMessage).
      ============================================================ */
   var CONFIG = {
-    title: "Estimated Reconstruction Cost by Submission Status",
+    title: "Estimated Reconstruction Cost Distribution",
 
     rowField:    "row",     // column for bar rows (e.g. Event)
     seriesField: "series",  // column for stacked segments (e.g. Status)
@@ -340,35 +357,35 @@
 
     currencySymbol: "$",    // "" for plain numbers
     darkMode: false,
-    mode: "stacked",        // "stacked" = 100% Stacked Bar Chart (composition, full width)
+    mode: "progress",       // "stacked" = 100% Stacked Bar Chart (composition, full width)
                             // "bar"     = Stacked Bar Chart (length = total value, shared axis)
                             // "progress"= progress bars (value vs max on a grey track)
-    valueLabels: "full",    // in-segment labels: "full" | "compact" | "none"
+    valueLabels: "none",    // in-segment labels: "full" | "compact" | "none"
     showRowValue: true,     // progress mode: value at the right end of each row
     showTrack: true,        // progress mode: grey track behind the fill
-    legendPosition: "right",// "right" | "top"
+    legendPosition: "bottom",// "right" | "top" | "bottom"
     showLegend: true,       // false = hide legend entirely
-    valueAlign: null,       // "bar" (hug bar end) | "right" (aligned column); default: bar for stacked, right for progress
+    valueAlign: "right",    // "bar" (hug bar end) | "right" (aligned column); default: bar for stacked, right for progress
     rowLabelAlign: "left",  // "left" | "right"
-    maxValue: null,         // progress mode: fixed scale max; null = largest row total
+    maxValue: 56000000,     // progress mode: fixed scale max; null = largest row total
     colorRules: null,       // e.g. [{min:90,color:"#17B751"},{min:50,color:"#F7630C"},{min:0,color:"#EF4444"}]
-    barHeight: 18,          // px (override per chart via payload, e.g. barHeight: 10 for thin progress bars)
+    barHeight: 16,          // px (override per chart via payload, e.g. barHeight: 10 for thin progress bars)
     barRadius: 8,           // px — Figma radius token l (xs 2 / s 4 / m 6 / l 8 / xl 12)
 
     // Known series get fixed design-system colours; extras rotate the accent palette.
     seriesColors: {
-      "(Blank)":          "#374151",
-      "TBD":              "#111827",
-      "Identified":       "#F7630C",
-      "Scoped":           "#FACC15",
-      "Approved Council": "#14B8A6",
-      "Submitted RA":     "#17B751",
-      "Approved RA":      "#118E3F",
-      "Withdrawn":        "#EF4444"
+      "(Blank)":         "#E5E7EB",
+      "TBD":              "#686C75",
+      "Plugged":          "#F13B1B",
+      "Strategic":        "#F7630C",
+      "Concept":          "#FACC15",
+      "Cost Estimation":  "#8D4FF7",
+      "Market Response":  "#17B751",
+      "TULG Approved":    "#079C6B"
     },
     // Legend / stacking order. Series not listed are appended in first-seen order.
-    seriesOrder: ["(Blank)", "TBD", "Identified", "Scoped",
-                  "Approved Council", "Submitted RA", "Approved RA", "Withdrawn"],
+    seriesOrder: ["(Blank)", "TBD", "Plugged", "Strategic",
+                  "Concept", "Cost Estimation", "Market Response", "TULG Approved"],
     // When seriesOrder is provided, show every listed series in the legend
     // even if it has no data (matches Power BI behaviour).
     legendShowAll: true,
@@ -379,13 +396,15 @@
 
     // Demo data — replaced when real data arrives
     data: [
-      { row: "AGRN 1212", series: "Identified",   value: 133064663 },
-      { row: "AGRN 1212", series: "Scoped",       value: 18000000 },
-      { row: "AGRN 1212", series: "Submitted RA", value: 75509956 },
-      { row: "AGRN 1170", series: "Submitted RA", value: 2343810 },
-      { row: "AGRN 1012", series: "Approved RA",  value: 1568037 },
-      { row: "AGRN 1025", series: "Approved RA",  value: 1096790 },
-      { row: "AGRN 1213", series: "Identified",   value: 146880 }
+      { row: "AGRN 1212 Slips",          series: "Plugged",         value: 41400000 },
+      { row: "AGRN 1212 Slips",          series: "Strategic",       value: 39600000 },
+      { row: "AGRN 1212 Bridges",        series: "Plugged",         value: 9000000 },
+      { row: "AGRN 1212 Bridges",        series: "Strategic",       value: 50000000 },
+      { row: "AGRN 1212 Sealed Roads",   series: "Plugged",         value: 40600000 },
+      { row: "AGRN 1212 Sealed Roads",   series: "Cost Estimation", value: 11400000 },
+      { row: "AGRN 1212 Unsealed Roads", series: "TULG Approved",   value: 30000000 },
+      { row: "AGRN 1212 Drainage",       series: "Plugged",         value: 3700000 },
+      { row: "AGRN 1170 Slips",          series: "Cost Estimation", value: 1800000 }
     ]
   };
   /* ============================================================ */
@@ -560,6 +579,8 @@
     legendEl.innerHTML = "";
     document.getElementById("chartArea").classList.toggle("legend-top",
       state.legendPosition === "top");
+    document.getElementById("chartArea").classList.toggle("legend-bottom",
+      state.legendPosition === "bottom");
     legendEl.style.display = state.showLegend === false ? "none" : "";
     rowsEl.classList.toggle("label-right", state.rowLabelAlign === "right");
 
@@ -607,7 +628,7 @@
 
     // Widen the label column to the longest row name (approx via char count)
     var maxChars = rowOrder.reduce(function (m, r) { return Math.max(m, r.length); }, 0);
-    var labelCap = Math.max(56, Math.min(160, window.innerWidth * 0.26));
+    var labelCap = Math.max(56, Math.min(210, window.innerWidth * 0.34));
     document.documentElement.style.setProperty("--label-width",
       Math.min(labelCap, Math.max(56, maxChars * 7.4 + 8)) + "px");
 
