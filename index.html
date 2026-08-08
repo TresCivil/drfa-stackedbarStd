@@ -689,8 +689,7 @@
           track.classList.add("hovering");
           seg.classList.add("active");
           tooltip.innerHTML = "<strong>" + escapeHtml(rowName) + " · " +
-            escapeHtml(seriesName) + "</strong>&nbsp; " + fmtFull(cell.value) +
-            " (" + (cell.value / total * 100).toFixed(1) + "%)";
+            escapeHtml(seriesName) + "</strong>&nbsp; " + fmtFull(cell.value);
           tooltip.style.left = (ev.clientX + 12) + "px";
           tooltip.style.top = (ev.clientY - 10) + "px";
           tooltip.classList.add("show");
